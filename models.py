@@ -1,6 +1,5 @@
 from sqlalchemy import create_engine, Column, String, Integer, Boolean, Float, ForeignKey
-from sqlalchemy.orm import declarative_base
-from sqlalchemy_utils.types import ChoiceType
+from sqlalchemy.orm import declarative_base, relationship
 
 db = create_engine("sqlite:///banco.db")
 
@@ -23,27 +22,27 @@ class Usuario(Base):
     self.ativo = ativo
     self.admin = admin
 
-class Pedidos(Base):
+class Pedido(Base):
   __tablename__= "pedidos"
-
-  # STATUS_PEDIDOS = (
-  #   ("PENDENTE", "PENDENTE"),
-  #   ("CANCELADO", "CANCELADO"),
-  #   ("FINALIZADO", "FINALIZADO")
-  # )
 
   id = Column("id", Integer, primary_key=True, autoincrement=True)
   status = Column("status", String)
   usuario = Column("usuario", ForeignKey("usuarios.id"))
-  preco = Column("preco", Float)
+  preco = Column("preco", Float) 
+  
+  itens = relationship("ItemPedido", backref="pedido_rel", cascade="all, delete") #-orphan
 
   def __init__(self, usuario, status="PENDENTES", preco=0):
     self.usuario = usuario
     self.preco = preco
     self.status = status
 
+  def calcular_preco(self):
+    self.preco = sum(item.preco_unitario * item.quantidade for item in self.itens)
+
+
 class ItemPedido(Base):
-  __tablename__ = "itens_pedidos"
+  __tablename__ = "itens_pedido"
 
   id = Column("id", Integer, primary_key=True, autoincrement=True)
   quantidade = Column("quantidade", Integer)
@@ -53,8 +52,9 @@ class ItemPedido(Base):
   pedido = Column("pedido", ForeignKey("pedidos.id"))
 
   def __init__(self, quantidade, sabor, tamanho, preco_unitario, pedido):
-    self.quantidade = quantidade
-    self.sabor = sabor
-    self.tamanho = tamanho
-    self.preco_unitario = preco_unitario
-    self.pedido = pedido
+      self.quantidade = quantidade
+      self.sabor = sabor
+      self.tamanho = tamanho
+      self.preco_unitario = preco_unitario
+      self.pedido = pedido
+
