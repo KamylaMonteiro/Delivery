@@ -1,7 +1,14 @@
+import os
 from sqlalchemy import create_engine, Column, String, Integer, Boolean, Float, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship
 
-db = create_engine("sqlite:///banco.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+engine_url = DATABASE_URL if DATABASE_URL else "sqlite:///banco.db"
+db = create_engine(engine_url)
 
 Base = declarative_base()
 
